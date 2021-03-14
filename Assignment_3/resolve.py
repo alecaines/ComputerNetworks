@@ -42,13 +42,13 @@ def collect_results(name: str) -> dict:
     full_response = {}
     target_name = dns.name.from_text(name)
     # lookup CNAME
-    response = lookup(target_name, dns.rdatatype.CNAME)
+    response = lookup(target_name, dns.rdatatype.CNAME, ROOT_SERVERS)
     cnames = []
     for answers in response.answer:
         for answer in answers:
             cnames.append({"name": answer, "alias": name})
     # lookup A
-    response = lookup(target_name, dns.rdatatype.A)
+    response = lookup(target_name, dns.rdatatype.A, ROOT_SERVERS)
     arecords = []
     for answers in response.answer:
         a_name = answers.name
@@ -56,7 +56,7 @@ def collect_results(name: str) -> dict:
             if answer.rdtype == 1:  # A record
                 arecords.append({"name": a_name, "address": str(answer)})
     # lookup AAAA
-    response = lookup(target_name, dns.rdatatype.AAAA)
+    response = lookup(target_name, dns.rdatatype.AAAA, ROOT_SERVERS)
     aaaarecords = []
     for answers in response.answer:
         aaaa_name = answers.name
@@ -64,7 +64,7 @@ def collect_results(name: str) -> dict:
             if answer.rdtype == 28:  # AAAA record
                 aaaarecords.append({"name": aaaa_name, "address": str(answer)})
     # lookup MX
-    response = lookup(target_name, dns.rdatatype.MX)
+    response = lookup(target_name, dns.rdatatype.MX, ROOT_SERVERS)
     mxrecords = []
     for answers in response.answer:
         mx_name = answers.name
@@ -82,7 +82,7 @@ def collect_results(name: str) -> dict:
     return full_response
 
 def lookup(target_name: dns.name.Name,
-           qtype: dns.rdata.Rdata) -> dns.message.Message:
+           qtype: dns.rdata.Rdata, servers) -> dns.message.Message:
     """
     This function uses a recursive resolver to find the relevant answer to the
     query.
@@ -91,24 +91,50 @@ def lookup(target_name: dns.name.Name,
     and recurses to find the proper answer.
     """
 
-    outbound_query = dns.message.make_query(target_name, qtype)
-    response = ''
-    for root_server in ROOT_SERVERS:
-        try:
-            response = dns.query.udp(outbound_query, root_server, 3)
-            break
-        except:
-            pass            
-    #response = dns.query.udp(outbound_query, "8.8.8.8", 3)
-    x = 3
-    target = str(response.sections[x])
-    target = str(target)[1:len(str(target))-1]
     CNAME = []
     A = []
     AAAA = []
     MX = []
-    print('(110) is this A?', ' A ' in target)
-    print('(111) target:', target.split('RRset:'))
+    outbound_query = dns.message.make_query(target_name, qtype)
+    response = ''
+
+    for server in servers:
+        try:
+            response = dns.query.udp(outbound_query, server, 3)
+            break
+        except:
+            pass            
+    #response = dns.query.udp(outbound_query, "8.8.8.8", 3)
+#    x = 3
+#    target = str(response.sections[x])
+#    target = str(target)[1:len(str(target))-1]
+    CNAME = []
+    A = []
+    AAAA = []
+    MX = []
+    types = set([obj.rdtype for obj in response.additional])
+    print(types)
+#    for obj in response.additional:
+#        if obj.rdtype == 1:
+#    commadmd=target.split(',')
+#    has_ip = list(filter(
+#        lambda x: '[' in x and ']' in x and '<' in x and '>' in x,
+#    commadmd))
+#           
+#    print('(120) has_ip:', has_ip)
+#    justip = list(map(
+#        lambda x: x[x.find('[<')+2:x.find('>]')], 
+#    has_ip)) 
+#    print('(121) justip:', justip)
+#
+#lambda x: x[x.find('[<')+2:x.find('>]')]
+#    for entry in commadmd:
+#        if ' A ' in entry and '[' in entry and ']' in entry and '<' in entry and '>' in entry:
+#             A+=
+#     
+    #print('(115) target:', target)
+    #print('(110) is this A?', ' A ' in target)
+    #print('(111) target:', target.split('RRset:'))
 
     #if 'CNAME' in target:
     #    CNAME+=str(target)[str(target).find('[')+1:str(target).find(']')].split(',')

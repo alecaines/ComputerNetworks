@@ -42,13 +42,13 @@ def collect_results(name: str) -> dict:
     full_response = {}
     target_name = dns.name.from_text(name)
     # lookup CNAME
-    response = lookup(target_name, dns.rdatatype.CNAME, ROOT_SERVERS)
+    response = lookup(target_name, dns.rdatatype.CNAME)
     cnames = []
     for answers in response.answer:
         for answer in answers:
             cnames.append({"name": answer, "alias": name})
     # lookup A
-    response = lookup(target_name, dns.rdatatype.A, ROOT_SERVERS)
+    response = lookup(target_name, dns.rdatatype.A)
     arecords = []
     for answers in response.answer:
         a_name = answers.name
@@ -56,7 +56,7 @@ def collect_results(name: str) -> dict:
             if answer.rdtype == 1:  # A record
                 arecords.append({"name": a_name, "address": str(answer)})
     # lookup AAAA
-    response = lookup(target_name, dns.rdatatype.AAAA, ROOT_SERVERS)
+    response = lookup(target_name, dns.rdatatype.AAAA)
     aaaarecords = []
     for answers in response.answer:
         aaaa_name = answers.name
@@ -64,7 +64,7 @@ def collect_results(name: str) -> dict:
             if answer.rdtype == 28:  # AAAA record
                 aaaarecords.append({"name": aaaa_name, "address": str(answer)})
     # lookup MX
-    response = lookup(target_name, dns.rdatatype.MX, ROOT_SERVERS)
+    response = lookup(target_name, dns.rdatatype.MX)
     mxrecords = []
     for answers in response.answer:
         mx_name = answers.name
@@ -81,8 +81,9 @@ def collect_results(name: str) -> dict:
 
     return full_response
 
+
 def lookup(target_name: dns.name.Name,
-           qtype: dns.rdata.Rdata, servers) -> dns.message.Message:
+           qtype: dns.rdata.Rdata) -> dns.message.Message:
     """
     This function uses a recursive resolver to find the relevant answer to the
     query.
@@ -90,56 +91,10 @@ def lookup(target_name: dns.name.Name,
     TODO: replace this implementation with one which asks the root servers
     and recurses to find the proper answer.
     """
-    print('(93) servers:', servers)
-
-    CNAME = []
-    A = []
-    AAAA = []
-    MX = []
 
     outbound_query = dns.message.make_query(target_name, qtype)
-    response = ''
+    response = dns.query.udp(outbound_query, "8.8.8.8", 3)
 
-    for server in servers:
-        try:
-            response = dns.query.udp(outbound_query, server, 3)
-            break
-        except:
-            pass            
-    #response = dns.query.udp(outbound_query, "8.8.8.8", 3)
-
-    CNAME = []
-    A = []
-    AAAA = []
-    MX = []
-
-    #print('(113) additional:', response.additional[0])
-    grab_ip = lambda x: str(x)[str(x).find('[<')+2:str(x).find('>]')]
-    for obj in response.additional:
-        if ' CNAME ' in str(obj):
-           CNAME.append(grab_ip(obj))
-        elif ' A ' in str(obj):
-           A.append(grab_ip(obj))
-        elif ' AAAA ' in str(obj):
-           AAAA.append(grab_ip(obj))
-        elif ' MX ' in str(obj):
-           MX.append(grab_ip(obj))
-    print('(127) A:', A)
-    if len(A) > 0:
-        lookup(target_name, dns.rdatatype.A, A)
-    if len(AAAA) > 0:
-        lookup(target_name, dns.rdatatype.AAAA, AAAA)
-    if len(CNAME) > 0:
-        lookup(target_name, dns.rdatatype.CNAME, CNAME)
-    if len(MX) > 0:
-        lookup(target_name, dns.rdatatype.MX, MX)
-
-#    print('(114) answer:', response.answer)
-#    types = set([obj.rdtype for obj in response.additional])
-#    print(types)
-
-
-    res = {'CNAME': CNAME, 'A': A, 'AAAA': AAAA, 'MX':MX}
     return response
 
 
@@ -148,7 +103,7 @@ def print_results(results: dict) -> None:
     take the results of a `lookup` and print them to the screen like the host
     program would.
     """
-    print(results)
+
     for rtype, fmt_str in FORMATS:
         for result in results.get(rtype, []):
             print(fmt_str.format(**result))
@@ -160,6 +115,7 @@ def main():
     printresults(lookup(hostname))
     """
     argument_parser = argparse.ArgumentParser()
+    
     argument_parser.add_argument("name", nargs="+",
                                  help="DNS name(s) to look up")
     

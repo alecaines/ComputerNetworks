@@ -90,7 +90,7 @@ def lookup(target_name: dns.name.Name,
     TODO: replace this implementation with one which asks the root servers
     and recurses to find the proper answer.
     """
-    print('(93) servers:', servers)
+    #print('(93) servers:', servers)
 
     CNAME = []
     A = []
@@ -103,7 +103,7 @@ def lookup(target_name: dns.name.Name,
     for server in servers:
         try:
             response = dns.query.udp(outbound_query, server, 3)
-            break
+            #break
         except:
             pass            
     #response = dns.query.udp(outbound_query, "8.8.8.8", 3)
@@ -115,24 +115,24 @@ def lookup(target_name: dns.name.Name,
 
     #print('(113) additional:', response.additional[0])
     grab_ip = lambda x: str(x)[str(x).find('[<')+2:str(x).find('>]')]
-    for obj in response.additional:
-        if ' CNAME ' in str(obj):
-           CNAME.append(grab_ip(obj))
-        elif ' A ' in str(obj):
-           A.append(grab_ip(obj))
-        elif ' AAAA ' in str(obj):
-           AAAA.append(grab_ip(obj))
-        elif ' MX ' in str(obj):
-           MX.append(grab_ip(obj))
-    print('(127) A:', A)
+    print('(118) response type:', type(response))
+    print('(119) response functions:', dir(response))
+    if response.additional:
+        for obj in response.additional:
+            if ' A ' in str(obj):
+                A.append(grab_ip(obj))
+            elif ' AAAA ' in str(obj):
+                AAAA.append(grab_ip(obj))
+            elif ' MX ' in str(obj):
+                MX.append(grab_ip(obj))
+            elif ' CNAME ' in str(obj):
+                CNAME.append(grab_ip(obj))
+    #print('(127) A:', A)
     if len(A) > 0:
+        A = list(map(lambda x: x[x.find('A ')+2:len(x)-2], A))
         lookup(target_name, dns.rdatatype.A, A)
-    if len(AAAA) > 0:
-        lookup(target_name, dns.rdatatype.AAAA, AAAA)
-    if len(CNAME) > 0:
-        lookup(target_name, dns.rdatatype.CNAME, CNAME)
-    if len(MX) > 0:
-        lookup(target_name, dns.rdatatype.MX, MX)
+    else:
+        print('(127) ansewr??:',response.answer)
 
 #    print('(114) answer:', response.answer)
 #    types = set([obj.rdtype for obj in response.additional])

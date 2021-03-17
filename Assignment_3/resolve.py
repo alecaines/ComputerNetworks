@@ -134,7 +134,6 @@ def lookup(target_name: dns.name.Name,
             elif ' CNAME ' in str(obj):
                 CNAME.append(obj)
                 #CNAME.append(grab_ip(obj))
-
     #print('(127) A:', A)
     if len(A) > 0:
         #A = list(map(lambda x: x[x.find('A ')+2:len(x)-2], A))

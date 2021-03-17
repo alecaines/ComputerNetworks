@@ -49,6 +49,7 @@ def collect_results(name: str) -> dict:
             cnames.append({"name": answer, "alias": name})
     # lookup A
     response = lookup(target_name, dns.rdatatype.A, ROOT_SERVERS)
+    print('(52) response:', response.additional)
     arecords = []
     for answers in response.answer:
         a_name = answers.name
@@ -98,14 +99,16 @@ def lookup(target_name: dns.name.Name,
     MX = []
 
     outbound_query = dns.message.make_query(target_name, qtype)
-    response = ''
+    response = None 
 
     for server in servers:
         try:
             response = dns.query.udp(outbound_query, server, 3)
-            #break
+            print('(107) type(response)', type(response))
+            break
         except:
             pass            
+
     #response = dns.query.udp(outbound_query, "8.8.8.8", 3)
 
     CNAME = []
@@ -115,24 +118,27 @@ def lookup(target_name: dns.name.Name,
 
     #print('(113) additional:', response.additional[0])
     grab_ip = lambda x: str(x)[str(x).find('[<')+2:str(x).find('>]')]
-    print('(118) response type:', type(response))
-    print('(119) response functions:', dir(response))
-    if response.additional:
+    #print('(118) response type:', type(response))
+    #print('(119) response functions:', dir(response))
+    if response:
         for obj in response.additional:
             if ' A ' in str(obj):
-                A.append(grab_ip(obj))
+                A.append(obj)
+                #A.append(grab_ip(obj))
             elif ' AAAA ' in str(obj):
-                AAAA.append(grab_ip(obj))
+                AAAA.append(obj)
+                #AAAA.append(grab_ip(obj))
             elif ' MX ' in str(obj):
-                MX.append(grab_ip(obj))
+                MX.append(obj)
+                #MX.append(grab_ip(obj))
             elif ' CNAME ' in str(obj):
-                CNAME.append(grab_ip(obj))
+                CNAME.append(obj)
+                #CNAME.append(grab_ip(obj))
+
     #print('(127) A:', A)
     if len(A) > 0:
-        A = list(map(lambda x: x[x.find('A ')+2:len(x)-2], A))
+        #A = list(map(lambda x: x[x.find('A ')+2:len(x)-2], A))
         lookup(target_name, dns.rdatatype.A, A)
-    else:
-        print('(127) ansewr??:',response.answer)
 
 #    print('(114) answer:', response.answer)
 #    types = set([obj.rdtype for obj in response.additional])
@@ -140,7 +146,9 @@ def lookup(target_name: dns.name.Name,
 
 
     res = {'CNAME': CNAME, 'A': A, 'AAAA': AAAA, 'MX':MX}
+    #print('(148) response:', response)
     return response
+    #return response
 
 
 def print_results(results: dict) -> None:
@@ -148,7 +156,7 @@ def print_results(results: dict) -> None:
     take the results of a `lookup` and print them to the screen like the host
     program would.
     """
-    print(results)
+    print('(157) results:',results)
     for rtype, fmt_str in FORMATS:
         for result in results.get(rtype, []):
             print(fmt_str.format(**result))

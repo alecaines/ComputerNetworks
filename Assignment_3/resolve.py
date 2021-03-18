@@ -4,6 +4,7 @@ resolve.py: a recursive resolver built using dnspython
 
 import argparse
 
+import time
 import dns.message
 import dns.name
 import dns.query
@@ -49,7 +50,7 @@ def collect_results(name: str) -> dict:
             cnames.append({"name": answer, "alias": name})
     # lookup A
     response = lookup(target_name, dns.rdatatype.A, ROOT_SERVERS)
-    print('(52) response:', response.additional)
+    #print('(52) response:', response)
     arecords = []
     for answers in response.answer:
         a_name = answers.name
@@ -103,9 +104,15 @@ def lookup(target_name: dns.name.Name,
 
     for server in servers:
         try:
+          #  t = 0 
+          #  while t<3:
+          #  time.sleep(1)
+          #  t+=1
             response = dns.query.udp(outbound_query, server, 3)
             print('(107) type(response)', type(response))
             break
+            #print("(114) didn't work out")
+            #return None 
         except:
             pass            
 
@@ -123,30 +130,36 @@ def lookup(target_name: dns.name.Name,
     if response:
         for obj in response.additional:
             if ' A ' in str(obj):
-                A.append(obj)
-                #A.append(grab_ip(obj))
+                #A.append(obj)
+                A.append(grab_ip(obj))
             elif ' AAAA ' in str(obj):
-                AAAA.append(obj)
-                #AAAA.append(grab_ip(obj))
+                #AAAA.append(obj)
+                AAAA.append(grab_ip(obj))
             elif ' MX ' in str(obj):
-                MX.append(obj)
-                #MX.append(grab_ip(obj))
+                #MX.append(obj)
+                MX.append(grab_ip(obj))
             elif ' CNAME ' in str(obj):
-                CNAME.append(obj)
-                #CNAME.append(grab_ip(obj))
-    #print('(127) A:', A)
-    if len(A) > 0:
+                #CNAME.append(obj)
+                CNAME.append(grab_ip(obj))
+    print('(144) response:', response)
+    print('(145) A:', A)
+    print('(146) AAAA:', AAAA)
+    print('(147) MX:', MX)
+    print('(148) CNAME:', CNAME)
+    print('(149) response type: ', type(response))
+    #if len(A) > 0:
+    if  response.answer == []:
         #A = list(map(lambda x: x[x.find('A ')+2:len(x)-2], A))
         lookup(target_name, dns.rdatatype.A, A)
-
+    else:
+        return response
 #    print('(114) answer:', response.answer)
 #    types = set([obj.rdtype for obj in response.additional])
 #    print(types)
 
 
-    res = {'CNAME': CNAME, 'A': A, 'AAAA': AAAA, 'MX':MX}
+#    res = {'CNAME': CNAME, 'A': A, 'AAAA': AAAA, 'MX':MX}
     #print('(148) response:', response)
-    return response
     #return response
 
 

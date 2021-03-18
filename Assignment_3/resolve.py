@@ -92,7 +92,7 @@ def lookup(target_name: dns.name.Name,
     TODO: replace this implementation with one which asks the root servers
     and recurses to find the proper answer.
     """
-    #print('(93) servers:', servers)
+    print('(95) servers:', servers)
 
     CNAME = []
     A = []
@@ -101,23 +101,25 @@ def lookup(target_name: dns.name.Name,
 
     outbound_query = dns.message.make_query(target_name, qtype)
     response = None 
-
+    #print('(104) outbound query', outbound_query)
+    #print('(105) testing second wave:', dns.query.udp(outbound_query, '192.5.6.3', 3))
     for server in servers:
         try:
-          #  t = 0 
-          #  while t<3:
-          #  time.sleep(1)
-          #  t+=1
-            response = dns.query.udp(outbound_query, server, 3)
-            print('(107) type(response)', type(response))
-            break
+            t = 0 
+            while t<3:
+                time.sleep(1)
+                response = dns.query.udp(outbound_query, server, 3)
+                print(t, 'second(s) has elapsed (111)')
+                t+=1
+                print('(107) type(response)', type(response))
+                break
             #print("(114) didn't work out")
             #return None 
         except:
-            pass            
+            pass 
 
     #response = dns.query.udp(outbound_query, "8.8.8.8", 3)
-
+    print('(120) response:', response)
     CNAME = []
     A = []
     AAAA = []
@@ -125,13 +127,14 @@ def lookup(target_name: dns.name.Name,
 
     #print('(113) additional:', response.additional[0])
     grab_ip = lambda x: str(x)[str(x).find('[<')+2:str(x).find('>]')]
+    remove_pre_A = lambda x: x[x.find('IN A ')+5:len(x)]
     #print('(118) response type:', type(response))
     #print('(119) response functions:', dir(response))
     if response:
         for obj in response.additional:
             if ' A ' in str(obj):
                 #A.append(obj)
-                A.append(grab_ip(obj))
+                A.append(remove_pre_A(grab_ip(obj)))
             elif ' AAAA ' in str(obj):
                 #AAAA.append(obj)
                 AAAA.append(grab_ip(obj))
@@ -141,13 +144,14 @@ def lookup(target_name: dns.name.Name,
             elif ' CNAME ' in str(obj):
                 #CNAME.append(obj)
                 CNAME.append(grab_ip(obj))
-    print('(144) response:', response)
-    print('(145) A:', A)
-    print('(146) AAAA:', AAAA)
-    print('(147) MX:', MX)
-    print('(148) CNAME:', CNAME)
-    print('(149) response type: ', type(response))
+    #print('(144) response:', response)
+    #print('(145) A:', A)
+    #print('(146) AAAA:', AAAA)
+    #print('(147) MX:', MX)
+    #print('(148) CNAME:', CNAME)
+    #print('(149) response type: ', type(response))
     #if len(A) > 0:
+    print('(151) A:', A)
     if  response.answer == []:
         #A = list(map(lambda x: x[x.find('A ')+2:len(x)-2], A))
         lookup(target_name, dns.rdatatype.A, A)

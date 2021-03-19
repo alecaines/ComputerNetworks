@@ -49,8 +49,9 @@ def collect_results(name: str) -> dict:
     print('================================')
     print('(50) starting lookup at time', datetime.datetime.now())
     response = lookup(target_name, dns.rdatatype.CNAME, None, ROOT_SERVERS)
+    print('(52) got response', datetime.datetime.now())
     cnames = []
-    print('(51) response:', response, datetime.datetime.now())
+    print('(54) response:', response, datetime.datetime.now())
     for answers in response.answer:
         for answer in answers:
             cnames.append({"name": answer, "alias": name})
@@ -118,11 +119,7 @@ def lookup(target_name: dns.name.Name,
     for server in servers:
         try:
                 response = dns.query.udp(outbound_query, server, 3)
-                #print(t, 'second(s) has elapsed (111)')
-                #print('(107) type(response)', type(response))
                 break
-            #print("(114) didn't work out")
-            #return None 
         except:
             pass 
 
@@ -139,8 +136,9 @@ def lookup(target_name: dns.name.Name,
     print('(136) response:', response)
     print('-------------------------------')
     if response == None:
+        print('(143) are you none?', prev, datetime.datetime.now())
         return prev 
-    elif len(response.answer) > 0:
+    if len(response.answer) > 0:
         print('(144) qtype', qtype, datetime.datetime.now())
         print('(145) response type', type(response), type(response.answer))
         print('(146) found the answer', response.answer, datetime.datetime.now())
@@ -160,27 +158,32 @@ def lookup(target_name: dns.name.Name,
                 elif ' CNAME ' in str(obj):
                     #CNAME.append(obj)
                     CNAME.append(remove_pre(str(obj), 'IN CNAME '))
+        lookup(target_name, dns.rdatatype.A, prev, A)
+
+
+
         #print('(144) A:', A)
         #print('(145) AAAA:', AAAA)
         #print('(146) MX:', MX)
         #print('(147) CNAME:', CNAME)
         #if  response.answer == []:
         #A = list(map(lambda x: x[x.find('A ')+2:len(x)-2], A))
-        print('(147) qtype',str(qtype))
-        if str(qtype) == 'RdataType.A':
-            print('(170) looking up', qtype)
-            lookup(target_name, dns.rdatatype.A, prev, A)
-        elif str(qtype) == 'RdataType.CNAME':
-            print('(173) looking up', qtype)
-            lookup(target_name, dns.rdatatype.A, prev, A)
-            #lookup(target_name, dns.rdatatype.CNAME, response, A)
-        elif str(qtype) == 'RdataType.MX':
-            print('(177) looking up', qtype)
-            lookup(target_name, dns.rdatatype.A, prev, A)
-            #lookup(target_name, dns.rdatatype.MX, response, A)
-        elif str(qtype) == 'RdataType.AAAA':
-            print('(181) looking up', qtype)
-            lookup(target_name, dns.rdatatype.A, prev, A)
+
+        ##CHECKING EACH TYPE
+        #if str(qtype) == 'RdataType.A':
+        #    print('(170) looking up', qtype)
+        #    lookup(target_name, dns.rdatatype.A, prev, A)
+        #elif str(qtype) == 'RdataType.CNAME':
+        #    print('(173) looking up', qtype)
+        #    lookup(target_name, dns.rdatatype.A, prev, A)
+        #    #lookup(target_name, dns.rdatatype.CNAME, response, A)
+        #elif str(qtype) == 'RdataType.MX':
+        #    print('(177) looking up', qtype)
+        #    lookup(target_name, dns.rdatatype.A, prev, A)
+        #    #lookup(target_name, dns.rdatatype.MX, response, A)
+        #elif str(qtype) == 'RdataType.AAAA':
+        #    print('(181) looking up', qtype)
+        #    lookup(target_name, dns.rdatatype.A, prev, A)
             #lookup(target_name, dns.rdatatype.AAAA, response, A)
         #lookup(target_name, dns.rdatatype.A, A)
         #else:

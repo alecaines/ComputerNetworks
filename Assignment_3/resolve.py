@@ -43,13 +43,19 @@ def collect_results(name: str) -> dict:
     full_response = {}
     target_name = dns.name.from_text(name)
     # lookup CNAME
-    response = lookup(target_name, dns.rdatatype.CNAME, ROOT_SERVERS)
+    print('================================')
+    print('          TESTING CNAME         ')
+    print('================================')
+    response = lookup(target_name, dns.rdatatype.CNAME, None, ROOT_SERVERS)
     cnames = []
     for answers in response.answer:
         for answer in answers:
             cnames.append({"name": answer, "alias": name})
     # lookup A
-    response = lookup(target_name, dns.rdatatype.A, ROOT_SERVERS)
+    print('================================')
+    print('          TESTING A             ')
+    print('================================')
+    response = lookup(target_name, dns.rdatatype.A, None, ROOT_SERVERS)
     print('(53) response:', response)
     arecords = []
     for answers in response.answer:
@@ -58,7 +64,10 @@ def collect_results(name: str) -> dict:
             if answer.rdtype == 1:  # A record
                 arecords.append({"name": a_name, "address": str(answer)})
     # lookup AAAA
-    response = lookup(target_name, dns.rdatatype.AAAA, ROOT_SERVERS)
+    print('================================')
+    print('          TESTING AAA           ')
+    print('================================')
+    response = lookup(target_name, dns.rdatatype.AAAA, None, ROOT_SERVERS)
     aaaarecords = []
     for answers in response.answer:
         aaaa_name = answers.name
@@ -66,7 +75,7 @@ def collect_results(name: str) -> dict:
             if answer.rdtype == 28:  # AAAA record
                 aaaarecords.append({"name": aaaa_name, "address": str(answer)})
     # lookup MX
-    response = lookup(target_name, dns.rdatatype.MX, ROOT_SERVERS)
+    response = lookup(target_name, dns.rdatatype.MX, None, ROOT_SERVERS)
     mxrecords = []
     for answers in response.answer:
         mx_name = answers.name
@@ -84,7 +93,7 @@ def collect_results(name: str) -> dict:
     return full_response
 
 def lookup(target_name: dns.name.Name,
-           qtype: dns.rdata.Rdata, servers) -> dns.message.Message:
+           qtype: dns.rdata.Rdata, prev, servers) -> dns.message.Message:
     """
     This function uses a recursive resolver to find the relevant answer to the
     query.
@@ -123,7 +132,12 @@ def lookup(target_name: dns.name.Name,
     grab_ip = lambda x: str(x)[str(x).find('[<')+2:str(x).find('>]')+1]
     remove_pre = lambda x,s: x[x.find(s)+len(s):len(x)]
 #    print('(125) additional:', remove_pre_A(str(response.additional[0])))
-    if len(response.answer) > 0:
+    print('-------------------------------')
+    print('(136) response:',response)
+    print('-------------------------------')
+    if response == None:
+        return prev 
+    elif len(response.answer) > 0:
         print('(127) found the answer', response.answer)
         return response
     else:
@@ -141,19 +155,27 @@ def lookup(target_name: dns.name.Name,
                 elif ' CNAME ' in str(obj):
                     #CNAME.append(obj)
                     CNAME.append(remove_pre(str(obj), 'IN CNAME '))
-        print('(139) A:', A)
-        if  response.answer == []:
-            #A = list(map(lambda x: x[x.find('A ')+2:len(x)-2], A))
-            print('(147) qtype',str(qtype))
-            if str(qtype) == 'RdataType.A':
-                lookup(target_name, dns.rdatatype.A, A)
-            elif str(qtype) == 'RdataType.CNAME':
-                lookup(target_name, dns.rdatatype.CNAME, CNAME)
-            elif str(qtype) == 'RdataType.CNAME':
-                lookup(target_name, qtype, A)
-            #lookup(target_name, dns.rdatatype.A, A)
-        else:
-            return response
+        #print('(144) A:', A)
+        #print('(145) AAAA:', AAAA)
+        #print('(146) MX:', MX)
+        #print('(147) CNAME:', CNAME)
+        #if  response.answer == []:
+        #A = list(map(lambda x: x[x.find('A ')+2:len(x)-2], A))
+        print('(147) qtype',str(qtype))
+        if str(qtype) == 'RdataType.A':
+            lookup(target_name, dns.rdatatype.A, response, A)
+        elif str(qtype) == 'RdataType.CNAME':
+            lookup(target_name, dns.rdatatype.A, response, A)
+            #lookup(target_name, dns.rdatatype.CNAME, response, A)
+        elif str(qtype) == 'RdataType.MX':
+            lookup(target_name, dns.rdatatype.A, response, A)
+            #lookup(target_name, dns.rdatatype.MX, response, A)
+        elif str(qtype) == 'RdataType.AAAA':
+            lookup(target_name, dns.rdatatype.A, response, A)
+            #lookup(target_name, dns.rdatatype.AAAA, response, A)
+        #lookup(target_name, dns.rdatatype.A, A)
+        #else:
+        #    return response
     
 
 

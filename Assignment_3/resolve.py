@@ -121,29 +121,40 @@ def lookup(target_name: dns.name.Name,
     MX = []
 
     grab_ip = lambda x: str(x)[str(x).find('[<')+2:str(x).find('>]')+1]
-    remove_pre_A = lambda x: x[x.find('IN A ')+5:len(x)]
+    remove_pre = lambda x,s: x[x.find(s)+len(s):len(x)]
 #    print('(125) additional:', remove_pre_A(str(response.additional[0])))
-    if response:
-        for obj in response.additional:
-            if ' A ' in str(obj):
-                #A.append(obj)
-                A.append(remove_pre_A(str(obj)))
-            elif ' AAAA ' in str(obj):
-                #AAAA.append(obj)
-                AAAA.append(grab_ip(obj))
-            elif ' MX ' in str(obj):
-                #MX.append(obj)
-                MX.append(grab_ip(obj))
-            elif ' CNAME ' in str(obj):
-                #CNAME.append(obj)
-                CNAME.append(grab_ip(obj))
-    print('(139) A:', A)
-    if  response.answer == []:
-        #A = list(map(lambda x: x[x.find('A ')+2:len(x)-2], A))
-        lookup(target_name, dns.rdatatype.A, A)
-    else:
+    if len(response.answer) > 0:
+        print('(127) found the answer', response.answer)
         return response
-
+    else:
+        if response:
+            for obj in response.additional:
+                if ' A ' in str(obj):
+                    #A.append(obj)
+                    A.append(remove_pre(str(obj), 'IN A '))
+                elif ' AAAA ' in str(obj):
+                    #AAAA.append(obj)
+                    AAAA.append(remove_pre(str(obj), 'IN AAAA '))
+                elif ' MX ' in str(obj):
+                    #MX.append(obj)
+                    MX.append(remove_pre(str(obj),'IN MX '))
+                elif ' CNAME ' in str(obj):
+                    #CNAME.append(obj)
+                    CNAME.append(remove_pre(str(obj), 'IN CNAME '))
+        print('(139) A:', A)
+        if  response.answer == []:
+            #A = list(map(lambda x: x[x.find('A ')+2:len(x)-2], A))
+            print('(147) qtype',str(qtype))
+            if str(qtype) == 'RdataType.A':
+                lookup(target_name, dns.rdatatype.A, A)
+            elif str(qtype) == 'RdataType.CNAME':
+                lookup(target_name, dns.rdatatype.CNAME, CNAME)
+            elif str(qtype) == 'RdataType.CNAME':
+                lookup(target_name, qtype, A)
+            #lookup(target_name, dns.rdatatype.A, A)
+        else:
+            return response
+    
 
 
 #    print('(114) answer:', response.answer)

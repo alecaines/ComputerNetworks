@@ -44,23 +44,13 @@ def collect_results(name: str) -> dict:
     full_response = {}
     target_name = dns.name.from_text(name)
     # lookup CNAME
-#    print('================================')
-#    print('          TESTING CNAME         ')
-#    print('================================')
-#    print('(50) starting lookup at time', datetime.datetime.now())
     response = lookup(target_name, dns.rdatatype.CNAME, ROOT_SERVERS)
-#    print('(52) got response', datetime.datetime.now())
     cnames = []
-#    print('(54) response:', response, datetime.datetime.now())
     for answers in response.answer:
         for answer in answers:
             cnames.append({"name": answer, "alias": name})
     # lookup A
-#    print('================================')
-#    print('          TESTING A             ')
-#    print('================================')
     response = lookup(target_name, dns.rdatatype.A, ROOT_SERVERS)
-#    print('(53) response:', response)
     arecords = []
     for answers in response.answer:
         a_name = answers.name
@@ -68,9 +58,6 @@ def collect_results(name: str) -> dict:
             if answer.rdtype == 1:  # A record
                 arecords.append({"name": a_name, "address": str(answer)})
     # lookup AAAA
-#    print('================================')
-#    print('          TESTING AAA           ')
-#    print('================================')
     response = lookup(target_name, dns.rdatatype.AAAA, ROOT_SERVERS)
     aaaarecords = []
     for answers in response.answer:
@@ -105,7 +92,6 @@ def lookup(target_name: dns.name.Name,
     TODO: replace this implementation with one which asks the root servers
     and recurses to find the proper answer.
     """
-    #print('(95) servers:', servers)
 
     A = []
 
@@ -132,7 +118,6 @@ def print_results(results: dict) -> None:
     take the results of a `lookup` and print them to the screen like the host
     program would.
     """
-    #print('(157) results:',results)
     for rtype, fmt_str in FORMATS:
         for result in results.get(rtype, []):
             print(fmt_str.format(**result))

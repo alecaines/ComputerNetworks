@@ -5,6 +5,7 @@ resolve.py: a recursive resolver built using dnspython
 import argparse
 
 import time
+import datetime
 import dns.message
 import dns.name
 import dns.query
@@ -46,8 +47,10 @@ def collect_results(name: str) -> dict:
     print('================================')
     print('          TESTING CNAME         ')
     print('================================')
+    print('(50) starting lookup at time', datetime.datetime.now())
     response = lookup(target_name, dns.rdatatype.CNAME, None, ROOT_SERVERS)
     cnames = []
+    print('(51) response:', response, datetime.datetime.now())
     for answers in response.answer:
         for answer in answers:
             cnames.append({"name": answer, "alias": name})
@@ -133,12 +136,14 @@ def lookup(target_name: dns.name.Name,
     remove_pre = lambda x,s: x[x.find(s)+len(s):len(x)]
 #    print('(125) additional:', remove_pre_A(str(response.additional[0])))
     print('-------------------------------')
-    print('(136) response:',response)
+    print('(136) response:', response)
     print('-------------------------------')
     if response == None:
         return prev 
     elif len(response.answer) > 0:
-        print('(127) found the answer', response.answer)
+        print('(144) qtype', qtype, datetime.datetime.now())
+        print('(145) response type', type(response), type(response.answer))
+        print('(146) found the answer', response.answer, datetime.datetime.now())
         return response
     else:
         if response:
@@ -163,15 +168,19 @@ def lookup(target_name: dns.name.Name,
         #A = list(map(lambda x: x[x.find('A ')+2:len(x)-2], A))
         print('(147) qtype',str(qtype))
         if str(qtype) == 'RdataType.A':
-            lookup(target_name, dns.rdatatype.A, response, A)
+            print('(170) looking up', qtype)
+            lookup(target_name, dns.rdatatype.A, prev, A)
         elif str(qtype) == 'RdataType.CNAME':
-            lookup(target_name, dns.rdatatype.A, response, A)
+            print('(173) looking up', qtype)
+            lookup(target_name, dns.rdatatype.A, prev, A)
             #lookup(target_name, dns.rdatatype.CNAME, response, A)
         elif str(qtype) == 'RdataType.MX':
-            lookup(target_name, dns.rdatatype.A, response, A)
+            print('(177) looking up', qtype)
+            lookup(target_name, dns.rdatatype.A, prev, A)
             #lookup(target_name, dns.rdatatype.MX, response, A)
         elif str(qtype) == 'RdataType.AAAA':
-            lookup(target_name, dns.rdatatype.A, response, A)
+            print('(181) looking up', qtype)
+            lookup(target_name, dns.rdatatype.A, prev, A)
             #lookup(target_name, dns.rdatatype.AAAA, response, A)
         #lookup(target_name, dns.rdatatype.A, A)
         #else:

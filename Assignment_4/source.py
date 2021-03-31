@@ -28,13 +28,14 @@ def send(sock: socket.socket, data: bytes):
     # over the network, pausing half a second between sends to let the
     # network "rest" :)
     logger = assignment4.logging.get_logger("assignment-4-sender")
-    chunk_size = assignment4.MAX_PACKET/4
+    chunk_size = assignment4.MAX_PACKET
     print('(32) chunk_size:', chunk_size, len(data))
+    print('(33) do note that all lossy messages are missing exactly one chunk of data. So it drops one chunk of data because it is waiting one "unit" of time to short. Increase the speed of transmission or increase the throughput.')
     pause = .08
     #pause = .1 #original code
     
     offsets = range(0, len(data), assignment4.MAX_PACKET)
-    
+
     for chunk in [data[i:i + chunk_size] for i in offsets]:
         sock.send(chunk)
         logger.info("Pausing for %f seconds", round(pause, 2))
@@ -59,10 +60,15 @@ def recv(sock: socket.socket, dest: io.BufferedIOBase) -> int:
     num_bytes = 0
     while True:
         data = sock.recv(assignment4.MAX_PACKET)
+        print('-------------------------------')
+        print('(63) data:', data)
+        print('-------------------------------')
         if not data:
+            print('(64) send back?')
             break
         logger.info("Received %d bytes", len(data))
         dest.write(data)
         num_bytes += len(data)
         dest.flush()
+        print('(70)', num_bytes)
     return num_bytes

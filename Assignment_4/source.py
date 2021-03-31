@@ -11,7 +11,8 @@ import struct
 import assignment4
 import assignment4.logging
 
-
+n = 0 #ack count
+old_RTT = None
 def send(sock: socket.socket, data: bytes):
     """
     Implementation of the sending logic for sending data over a slow,
@@ -28,25 +29,36 @@ def send(sock: socket.socket, data: bytes):
     # over the network, pausing half a second between sends to let the
     # network "rest" :)
     logger = assignment4.logging.get_logger("assignment-4-sender")
-    chunk_size = assignment4.MAX_PACKET
-    print('(32) chunk_size:', chunk_size, len(data))
-    print('(33) do note that all lossy messages are missing exactly one chunk of data. So it drops one chunk of data because it is waiting one "unit" of time to short. Increase the speed of transmission or increase the throughput.')
-    pause = .08
+    header = b''
+    chunk_size = assignment4.MAX_PACKET#-len(header)
+    pause = .08  
     #pause = .1 #original code
     
     offsets = range(0, len(data), assignment4.MAX_PACKET)
 
     for chunk in [data[i:i + chunk_size] for i in offsets]:
-        ack = None
-        sock.send(chunk)
+
+        eRTT = lambda oRTT, sRTT: 0.875*oRTT+ 0.125*sRTT
+
+        if n == 0:
+            start = time.time() #start timer
+            sock.send(chunk)
+            end = time.time() #stop timer when you receive the ack
+            elapsed = float(str(end-start)) #calculate elapsed time
+
+            sample_RTT = 1
+            RTT = eRTT(elapsed, 1)
+            old_RTT = RTT
+
+            n+=1
+        else:
+            sock.send(chunk)
+            time.sleep(old_RTT)
+            old_RTT = eRTT(old_RTT, elapsed - sample_RTT)
+
+
         logger.info("Pausing for %f seconds", round(pause, 2))
         time.sleep(pause)
-        #while ack==None:
-        #   sock.send(chunk)
-        #   logger.info("Pausing for %f seconds", round(pause, 2))
-        #   time.sleep(pause)
-        #   if ack:
-        #      print('hey')
 
 
 def recv(sock: socket.socket, dest: io.BufferedIOBase) -> int:
@@ -64,6 +76,7 @@ def recv(sock: socket.socket, dest: io.BufferedIOBase) -> int:
     logger = assignment4.logging.get_logger("assignment-4-receiver")
     # Naive solution, where we continually read data off the socket
     # until we don't receive any more data, and then return.
+    # keep track of your sequence number.
     num_bytes = 0
     while True:
         data = sock.recv(assignment4.MAX_PACKET)
@@ -79,5 +92,5 @@ def recv(sock: socket.socket, dest: io.BufferedIOBase) -> int:
         dest.write(data)
         num_bytes += len(data)
         dest.flush()
-        print('(70)', num_bytes)
+        #print('(70)', num_bytes)
     return num_bytes

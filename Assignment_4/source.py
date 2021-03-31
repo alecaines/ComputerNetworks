@@ -11,8 +11,9 @@ import struct
 import assignment4
 import assignment4.logging
 
-n = 0 #ack count
-old_RTT = None
+def GLOBALS(ack_count=0, old_RTT=None):
+    return (ack_count, old_RTT)
+
 def send(sock: socket.socket, data: bytes):
     """
     Implementation of the sending logic for sending data over a slow,
@@ -35,12 +36,12 @@ def send(sock: socket.socket, data: bytes):
     #pause = .1 #original code
     
     offsets = range(0, len(data), assignment4.MAX_PACKET)
-
+    ack_count, old_RTT = GLOBALS()
     for chunk in [data[i:i + chunk_size] for i in offsets]:
 
         eRTT = lambda oRTT, sRTT: 0.875*oRTT+ 0.125*sRTT
 
-        if n == 0:
+        if ack_count == 0:
             start = time.time() #start timer
             sock.send(chunk)
             end = time.time() #stop timer when you receive the ack
@@ -50,11 +51,12 @@ def send(sock: socket.socket, data: bytes):
             RTT = eRTT(elapsed, 1)
             old_RTT = RTT
 
-            n+=1
+            ack_count+=1
         else:
             sock.send(chunk)
             time.sleep(old_RTT)
             old_RTT = eRTT(old_RTT, elapsed - sample_RTT)
+            ack_count+=1
 
 
         logger.info("Pausing for %f seconds", round(pause, 2))

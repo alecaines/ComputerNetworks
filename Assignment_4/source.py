@@ -37,9 +37,16 @@ def send(sock: socket.socket, data: bytes):
     offsets = range(0, len(data), assignment4.MAX_PACKET)
 
     for chunk in [data[i:i + chunk_size] for i in offsets]:
+        ack = None
         sock.send(chunk)
         logger.info("Pausing for %f seconds", round(pause, 2))
         time.sleep(pause)
+        #while ack==None:
+        #   sock.send(chunk)
+        #   logger.info("Pausing for %f seconds", round(pause, 2))
+        #   time.sleep(pause)
+        #   if ack:
+        #      print('hey')
 
 
 def recv(sock: socket.socket, dest: io.BufferedIOBase) -> int:
@@ -60,12 +67,14 @@ def recv(sock: socket.socket, dest: io.BufferedIOBase) -> int:
     num_bytes = 0
     while True:
         data = sock.recv(assignment4.MAX_PACKET)
-        print('-------------------------------')
-        print('(63) data:', data)
-        print('-------------------------------')
+    #    print('-------------------------------')
+    #    print('(63) data:', data)
+    #    print('-------------------------------')
         if not data:
             print('(64) send back?')
             break
+#        else:
+#          sock.send(b'ack')
         logger.info("Received %d bytes", len(data))
         dest.write(data)
         num_bytes += len(data)

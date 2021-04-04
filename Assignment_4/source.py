@@ -30,7 +30,7 @@ def send(sock: socket.socket, data: bytes):
     # over the network, pausing half a second between sends to let the
     # network "rest" :)
     logger = assignment4.logging.get_logger("assignment-4-sender")
-    header = b''
+    header = bytes() #should include ack number
     chunk_size = assignment4.MAX_PACKET#-len(header)
     pause = .08  
     #pause = .1 #original code
@@ -55,7 +55,7 @@ def send(sock: socket.socket, data: bytes):
         else:
             sock.send(chunk)
             time.sleep(old_RTT)
-            old_RTT = eRTT(old_RTT, elapsed - sample_RTT)
+            old_RTT = eRTT(old_RTT, (elapsed - sample_RTT) if sample_RTT < elapsed else (sample_RTT - elapsed))
             ack_count+=1
 
 
@@ -88,10 +88,10 @@ def recv(sock: socket.socket, dest: io.BufferedIOBase) -> int:
         if not data:
             print('(64) send back?')
             break
-#        else:
-#          sock.send(b'ack')
-        logger.info("Received %d bytes", len(data))
-        dest.write(data)
+        else:
+          sock.send(b'ack')
+          logger.info("Received %d bytes", len(data))
+          dest.write(data)
         num_bytes += len(data)
         dest.flush()
         #print('(70)', num_bytes)

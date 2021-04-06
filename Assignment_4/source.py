@@ -69,7 +69,7 @@ def send(sock: socket.socket, data: bytes):
                 returned_data = sock.recv(assignment4.MAX_PACKET)
                 ack_count+=1
             except:
-                print('errorsss')
+                pass
             old_RTT = eRTT(old_RTT, (elapsed - sample_RTT) if sample_RTT < elapsed else (sample_RTT - elapsed))
 
 
@@ -97,9 +97,6 @@ def recv(sock: socket.socket, dest: io.BufferedIOBase) -> int:
     num_bytes = 0
     while True:
         data = sock.recv(assignment4.MAX_PACKET)
-    #    print('-------------------------------')
-    #    print('(63) data:', data)
-    #    print('-------------------------------')
         print('(103) omg?', data.decode('utf-8')[:1])
         print('(104) ',data.decode('utf-8')[:1])
         if int(data.decode('utf-8')[:1]):
@@ -108,7 +105,7 @@ def recv(sock: socket.socket, dest: io.BufferedIOBase) -> int:
         else:
           decdata = data.decode('utf-8')
           chunk = decdata[str(decdata).find('\r\n\r\n')+len('\r\n\r\n'):]
-          #print('(104) data',data[str(data).find('\r\n\r\n')+len('\r\n\r\n'):], data[:str(data).find('\r\n\r\n')])
+         #print('(104) data',data[str(data).find('\r\n\r\n')+len('\r\n\r\n'):], data[:str(data).find('\r\n\r\n')])
           header = str(decdata[:str(decdata).find('\r\n\r\n')])
           print('(107) header', header)
           
